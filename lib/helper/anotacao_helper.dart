@@ -43,6 +43,13 @@ class AnotacaoHelper{
     return db;
   }
 
+  recuperarAnotacoes() async{
+    var bd = await db;
+    String sql = "SELECT * FROM $nomeTabela ORDER BY data DESC";
+    List anotacoes = await bd.rawQuery(sql);
+    return anotacoes;
+  }
+
   Future<int> salvar(Anotacao a) async{
     var bd = await db;
 
