@@ -45,6 +45,7 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 TextField(
+                  maxLines: 3,
                   controller: _descricaoController,
                   decoration: InputDecoration(
                       labelText: "Descrição",
@@ -69,6 +70,11 @@ class _HomeState extends State<Home> {
           );
       }
     );
+  }
+
+  void _removerAnotacao(int id) async{
+    await _db.removerAnotacao(id);
+    _recuperarAnotacoes();
   }
 
   _recuperarAnotacoes() async{
@@ -152,7 +158,7 @@ class _HomeState extends State<Home> {
                           ),
                           GestureDetector(
                             onTap: (){
-
+                              _removerAnotacao(anotacao.id);
                             },
                             child: Container(
                               padding: EdgeInsets.only(left: 10),
