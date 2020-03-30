@@ -1,6 +1,9 @@
 import 'package:anotacoessqliteflutterapp/helper/anotacao_helper.dart';
 import 'package:anotacoessqliteflutterapp/model/anotacao.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -8,18 +11,28 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
   var _db = AnotacaoHelper();
   TextEditingController _tituloController = TextEditingController();
   TextEditingController _descricaoController = TextEditingController();
   List<Anotacao> _anotacoes = List<Anotacao>();
 
-  _exibirTelaCadastro(){
+  _exibirTelaCadastro({Anotacao a}){
+    String textoSalvarAtualizar = "";
+    if(a == null){ //salvando
+      _tituloController.text = "";
+      _descricaoController.text = "";
+      textoSalvarAtualizar = "Adicionar";
+    }else { //atualizando
+      _tituloController.text = a.titulo;
+      _descricaoController.text = a.descricao;
+      textoSalvarAtualizar = "Atualizar";
+    }
+
     showDialog(
         context: context,
       builder: (context){
           return AlertDialog(
-            title: Text("Adicionar anotação"),
+            title: Text(" $textoSalvarAtualizar anotação"),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -46,8 +59,11 @@ class _HomeState extends State<Home> {
                   child: Text("Cancelar")
               ),
               FlatButton(
-                  onPressed: _salvarAnotacao,
-                  child: Text("Salvar")
+                  onPressed: (){
+                    _salvarAtualizarAnotacao(anotacao: a);
+                    Navigator.pop(context);
+                  } ,
+                  child: Text("$textoSalvarAtualizar")
               ),
             ],
           );
@@ -63,24 +79,36 @@ class _HomeState extends State<Home> {
       Anotacao anotacao = Anotacao.fromMap(item);
       anotacoesTemp.add(anotacao);
     }
-
     setState(() {
       _anotacoes = anotacoesTemp;
     });
     anotacoesTemp = null;
-
   }
 
-  _salvarAnotacao() async{
+  _salvarAtualizarAnotacao( {Anotacao anotacao} ) async{
     String titulo = _tituloController.text;
     String descricao = _descricaoController.text;
-    Anotacao a = Anotacao(titulo, descricao, DateTime.now().toString());
-    int resultado = await _db.salvar(a);
+
+    if(anotacao == null){ // salvar
+      Anotacao a = Anotacao(titulo, descricao, DateTime.now().toString());
+      int resultado = await _db.salvar(a);
+    }else{ //atualizando
+      anotacao.titulo = titulo;
+      anotacao.descricao = descricao;
+      anotacao.data = DateTime.now().toString();
+      int resultadoAtt = await _db.atualizarAnotacao(anotacao);
+    }
+
     _tituloController.clear();
     _descricaoController.clear();
-    print(resultado.toString());
 
     _recuperarAnotacoes();
+  }
+
+  _formatData(String data){
+    initializeDateFormatting('pt_BR');
+    var formater = DateFormat("d/M/y H:m");
+    return formater.format(DateTime.parse(data));
   }
 
   @override
@@ -108,7 +136,33 @@ class _HomeState extends State<Home> {
                   return Card(
                     child: ListTile(
                       title: Text(anotacao.titulo),
-                      subtitle: Text("${anotacao.data} - ${anotacao.descricao}"),
+                      subtitle: Text("${_formatData(anotacao.data)} - ${anotacao.descricao}"),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          GestureDetector(
+                          onTap: (){
+                            _exibirTelaCadastro(a: anotacao);
+                          },
+                            child: Container (
+                              child : Icon(Icons.edit,
+                                color: Colors.green,
+                              ),
+                            )
+                          ),
+                          GestureDetector(
+                            onTap: (){
+
+                            },
+                            child: Container(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Icon(Icons.delete,
+                                color: Colors.red,
+                              ),
+                            )
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
